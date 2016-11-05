@@ -1,8 +1,23 @@
 import numpy as np
 from scipy import sparse
+from math import log, exp
 
+ 
+def lfun(x):
+    return log(1 + exp(-x))
+
+def dlfun(x):
+    return -1 * exp(-x) / (1 + exp(-x))
+
+def sigmoid(x):
+    return 1/(1 + exp(-x))
+ 
+def nosigmoid(x):
+    return 1 - 1/(1 + exp(-x))
 
 class LogisticRegression:
+   
+    
     def __init__(self):
         self.w = None
         self.loss_history = None
@@ -46,7 +61,10 @@ class LogisticRegression:
             # Hint: Use np.random.choice to generate indices. Sampling with         #
             # replacement is faster than sampling without replacement.              #
             #########################################################################
-
+            
+            rng = np.random.choice(num_train, batch_size, replace = True)
+            X_batch = [X[i] for i in rng]
+            y_batch = [y[i] for i in rng]
 
             #########################################################################
             #                       END OF YOUR CODE                                #
@@ -60,7 +78,8 @@ class LogisticRegression:
             # TODO:                                                                 #
             # Update the weights using the gradient and the learning rate.          #
             #########################################################################
-
+            
+            self.w -=  learning_rate
 
             #########################################################################
             #                       END OF YOUR CODE                                #
@@ -91,9 +110,13 @@ class LogisticRegression:
         # Implement this method. Store the probabilities of classes in y_proba.   #
         # Hint: It might be helpful to use np.vstack and np.sum                   #
         ###########################################################################
-
-
-
+            
+            y_proba = np.zeros(X.shape, 2)
+            vect_sigmoid = np.vectorize(sigmoid)
+            vect_nosigmoid = np.vectorize(nosigmoid)
+            y_proba[0] = vect_sigmoid(np.dot(X[i].toarray()), self.w.reshape(self.w.shape[0], 1))
+            y_proba[1] = vect_nosigmoid(np.dot(X[i].toarray()), self.w.reshape(self.w.shape[0], 1))
+            
         ###########################################################################
         #                           END OF YOUR CODE                              #
         ###########################################################################
@@ -117,7 +140,7 @@ class LogisticRegression:
         # Implement this method. Store the predicted labels in y_pred.            #
         ###########################################################################
         y_proba = self.predict_proba(X, append_bias=True)
-        y_pred = ...
+        y_pred = y_proba[:,:1].round()
 
         ###########################################################################
         #                           END OF YOUR CODE                              #
@@ -138,6 +161,13 @@ class LogisticRegression:
         loss = 0
         # Compute loss and gradient. Your code should not contain python loops.
 
+        lfun_vect = np.vectorize(lfun)
+        loss = sum(lfun_vect(y_batch * np.dot(self.w, np.transpose(X_batch.toarray() ) ) )
+        loss = loss / (X_batch.toarray().shape[0])
+        
+        k = np.random.randint(X_batch.shape[0])
+        dw = -1 * y_batch[k] * X_batch.toarray()[k] * dlfun(y_batch[k] * np.dot(self.w, np.transpose(X_batch.toarray()[k]) ) )
+        dw = dw.reshape(self.w.shape[0], )
 
         # Right now the loss is a sum over all training examples, but we want it
         # to be an average instead so we divide by num_train.
